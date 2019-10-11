@@ -1,13 +1,10 @@
 {
   "name": "mhgenu-db",
   "version": "0.1.0",
+  "main": "./server/index.mjs",
   "private": true,
-  "dependencies": {
-    "react": "^16.10.1",
-    "react-dom": "^16.10.1",
-    "react-scripts": "3.2.0"
-  },
   "scripts": {
+    "server": "node --experimental-modules ./server/index.mjs",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -27,5 +24,21 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "dependencies": {
+    "@types/react-select": "^3.0.5",
+    "@uifabric/fluent-theme": "^7.1.4",
+    "better-sqlite3": "^5.4.3",
+    "office-ui-fabric-react": "^7.43.2",
+    "pattern-matching": "github:tpoisseau/js-pattern-matching#1.0.2",
+    "react": "^16.10.1",
+    "react-dom": "^16.10.1",
+    "react-scripts": "3.2.0",
+    "react-select": "^3.0.8",
+    "u-http-server": "github:tpoisseau/uNodeHttpServer#1.2.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^5.4.0",
+    "@types/node": "^12.7.11"
   }
 }

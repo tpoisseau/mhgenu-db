@@ -1,25 +1,21 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+
+import {GlobalProvider} from './contexts/global';
+
+import GlobalFilter from "./components/filters/GlobalFilter";
+import DebugGlobals from "./components/tables/DebugGlobals";
+import DispatchResult from "./components/tables/DispatchResult";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <GlobalProvider>
+      <div className="ms-sm12 ms-md10 ms-lg9 App mt-5">
+        <GlobalFilter />
+        <DispatchResult />
+        <DebugGlobals />
+      </div>
+    </GlobalProvider>
   );
 }
 
