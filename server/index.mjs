@@ -1,7 +1,11 @@
 import './set_map_json.mjs';
 import App from 'u-http-server';
 
-import {questLevelsByHub, findArmorPiecesByHubLevelsAndHunterType} from './requests.mjs';
+import {
+  questLevelsByHub,
+  findArmorPiecesByHubLevelsAndHunterType,
+  findWeaponsByHubLevelsAndHunterType
+} from './requests.mjs';
 
 const app = new App();
 
@@ -25,6 +29,13 @@ app
     const HunterType = {'Blademaster': 0, 'Gunner': 1}[ht];
     
     return findArmorPiecesByHubLevelsAndHunterType({Village, Guild, Arena, Permit, HunterType, Pieces});
+  })
+  .post('/search/weapon', ctx => {
+    const {Village, Guild, Arena, Permit, HunterType: ht, Weapons} = ctx.json;
+  
+    const HunterType = {'Blademaster': 0, 'Gunner': 1}[ht];
+  
+    return findWeaponsByHubLevelsAndHunterType({Village, Guild, Arena, Permit, HunterType, Weapons});
   })
 ;
 

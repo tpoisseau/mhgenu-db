@@ -101,8 +101,72 @@ function findArmorsPiecesByHunterType({HunterType, Pieces}) {
   INNER JOIN items i on a._id = i._id
   WHERE slot IN (${params})
     AND a.hunter_type IN (:HunterType, 2)
-  ORDER BY a.max_defense DESC, a.defense DESC
   `).all(Pieces, {HunterType})
+}
+
+
+function findWeaponsByHunterType({Weapons}) {
+  const params = Array(Weapons.length).fill('?').join(', ');
+  
+  return db.prepare(`
+  SELECT
+  w._id AS weapon_id,
+  w.parent_id AS weapon_parent_id,
+  w.wtype AS weapon_type,
+  w.creation_cost AS weapon_creation_cost,
+  w.upgrade_cost AS weapon_upgrade_cost,
+  w.attack AS weapon_attack,
+  w.max_attack AS weapon_max_attack,
+  w.element AS weapon_element,
+  w.element_attack AS weapon_element_attack,
+  w.element_2 AS weapon_element_2,
+  w.element_2_attack AS weapon_element_2_attack,
+  w.awaken AS weapon_awaken,
+  w.awaken_attack AS weapon_awaken_attack,
+  w.defense AS weapon_defense,
+  w.sharpness AS weapon_sharpness,
+  CAST(w.affinity AS INTEGER) AS weapon_affinity,
+  w.horn_notes AS weapon_horn_notes,
+  w.shelling_type AS weapon_shelling_type,
+  w.phial AS weapon_phial,
+  w.charges AS weapon_charges,
+  w.coatings AS weapon_coatings,
+  w.recoil AS weapon_recoil,
+  w.reload_speed AS weapon_reload_speed,
+  w.rapid_fire AS weapon_rapid_fire,
+  w.deviation AS weapon_deviation,
+  w.ammo AS weapon_ammo,
+  w.special_ammo AS weapon_special_ammo,
+  w.num_slots AS weapon_num_slots,
+  w.tree_depth AS weapon_tree_depth,
+  w.final AS weapon_final,
+  w.family AS weapon_family,
+  i._id AS item_id,
+  i.name AS item_name,
+  i.name_de AS item_name_de,
+  i.name_fr AS item_name_fr,
+  i.name_es AS item_name_es,
+  i.name_it AS item_name_it,
+  i.name_ja AS item_name_ja,
+  i.type AS item_type,
+  i.sub_type AS item_sub_type,
+  i.rarity AS item_rarity,
+  i.carry_capacity AS item_carry_capacity,
+  i.buy AS item_buy,
+  i.sell AS item_sell,
+  i.description AS item_description,
+  i.description_de AS item_description_de,
+  i.description_fr AS item_description_fr,
+  i.description_es AS item_description_es,
+  i.description_it AS item_description_it,
+  i.description_ja AS item_description_ja,
+  i.icon_name AS item_icon_name,
+  i.icon_color AS item_icon_color,
+  i.account AS item_account
+  FROM weapons AS w
+  INNER JOIN items i on w._id = i._id
+  WHERE w.wtype IN (${params})
+  `).all(Weapons)
 }
 
 const itemsForCompose = db.prepare(`
@@ -161,9 +225,10 @@ export function decomposeItemInSet(item_id) {
   
   return result;
 }
+
 decomposeItemInSet.cache = new Map();
 
-export function findArmorPiecesByHubLevelsAndHunterType({Village, Guild, Arena, Permit, HunterType, Pieces}) {
+export function findLootableByQuests({Village, Guild, Arena, Permit}) {
   // récuperer tout les items récuperable par les quêtes concernés : quest_rewards
   const itemsQuestRewards = itemsFromQuestRewardsByQuestLevels.all({Village, Guild, Arena, Permit});
   // récuperer tout les items récupérable sur la carte des quêtes concernés : gathering
@@ -171,17 +236,35 @@ export function findArmorPiecesByHubLevelsAndHunterType({Village, Guild, Arena, 
   // récuperer tout les items récuperable par les monstres des quêtes concernés : hunting_rewards
   const itemsHunt = itemsFromHuntingByQuestLevels.all({Village, Guild, Arena, Permit});
   
-  // récuperer toutes les pièces d'armures (filtré par Pieces) portable par HunterType : armor
-  const pieces = findArmorsPiecesByHunterType({HunterType, Pieces});
-
-  // faire la différence entre ce qui est récoltable et ce qui est necessaire pour le craft de l'arme
-  const lootableItems = mergeSets(
+  return mergeSets(
     ...[itemsQuestRewards, itemsGathering, itemsHunt].map(i => new Set(i))
   );
+}
+
+export function findArmorPiecesByHubLevelsAndHunterType({Village, Guild, Arena, Permit, HunterType, Pieces}) {
+  // faire la différence entre ce qui est récoltable et ce qui est necessaire pour le craft de l'arme
+  const lootableItems = findLootableByQuests({Village, Guild, Arena, Permit});
+  
+  // récuperer toutes les pièces d'armures (filtré par Pieces) portable par HunterType : armor
+  const pieces = findArmorsPiecesByHunterType({HunterType, Pieces});
+  
+  // retourner la liste des armures craftables
+  return pieces
+    // décomposer les pièces en composants le plus petit possibles (descendre la / les séquences de craft possible) : components
+    .map(pieces => (pieces.neededItems = decomposeItemInSet(pieces.armor_id), pieces))
+    .filter(({neededItems}) => includeSet(lootableItems, neededItems));
+}
+
+export function findWeaponsByHubLevelsAndHunterType({Village, Guild, Arena, Permit, Weapons}) {
+  // faire la différence entre ce qui est récoltable et ce qui est necessaire pour le craft de l'arme
+  const lootableItems = findLootableByQuests({Village, Guild, Arena, Permit});
+  
+  // récuperer toutes les pièces d'armures (filtré par Pieces) portable par HunterType : armor
+  const weapons = findWeaponsByHunterType({Weapons});
   
   // retourner la liste des armes craftables
-  return pieces
-    // // décomposer les pièces en composants le plus petit possibles (descendre la / les séquences de craft possible) : components
-    .map(pieces => (pieces.neededItems = decomposeItemInSet(pieces.armor_id), pieces))
+  return weapons
+    // décomposer les pièces en composants le plus petit possibles (descendre la / les séquences de craft possible) : components
+    .map(w => (w.neededItems = decomposeItemInSet(w.weapon_id), w))
     .filter(({neededItems}) => includeSet(lootableItems, neededItems));
 }
