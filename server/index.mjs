@@ -31,11 +31,9 @@ app
     return findArmorPiecesByHubLevelsAndHunterType({Village, Guild, Arena, Permit, HunterType, Pieces});
   })
   .post('/search/weapon', ctx => {
-    const {Village, Guild, Arena, Permit, HunterType: ht, Weapons} = ctx.json;
-  
-    const HunterType = {'Blademaster': 0, 'Gunner': 1}[ht];
-  
-    return findWeaponsByHubLevelsAndHunterType({Village, Guild, Arena, Permit, HunterType, Weapons});
+    const {Village, Guild, Arena, Permit, Weapons} = ctx.json;
+    
+    return findWeaponsByHubLevelsAndHunterType({Village, Guild, Arena, Permit, Weapons});
   })
 ;
 
